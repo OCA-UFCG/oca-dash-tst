@@ -1,18 +1,48 @@
-import Link from 'next/link';
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import PowerBI from "../components/PowerBI";
 
 export default function Home() {
+  const currentReportID = JSON.parse(
+    process.env.NEXT_PUBLIC_POWERBI_REPORTS_ID
+  )[0];
+  const [config, setConfig] = useState(null);
+
+  const initializePowerBI = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/powerbi/token?reportID=${currentReportID}`);
+      const { report_id, embed_url, embed_token } = await response.json();
+
+      Promise.all([import("powerbi-client")]).then(([pbi]) => {
+        setConfig({
+          type: "report",
+          id: report_id,
+          embedUrl: embed_url,
+          accessToken: embed_token,
+          tokenType: pbi.models.TokenType.Embed,
+          settings: {
+            panes: {
+              filters: {
+                expanded: false,
+                visible: false,
+              },
+            },
+          },
+        });
+      });
+    } catch (error) {
+      console.error("Error initializing report:", error);
+    }
+  }, [currentReportID]);
+
+  useEffect(() => {
+    initializePowerBI();
+  }, [initializePowerBI]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h1 className="text-2xl font-bold mb-6">Dashboard Links</h1>
-      <div className="space-y-4">
-        <Link
-          href="/powerbi"
-          className="block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Power BI Dashboard
-        </Link>
-      </div>
+      {config && <PowerBI config={config} />}
     </div>
   );
 }
-
