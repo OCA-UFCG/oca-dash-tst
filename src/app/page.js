@@ -28,6 +28,15 @@ export default function Home() {
                 visible: false,
               },
             },
+            permissions: {
+              allowFullScreen: true,
+              geolocation: true,
+              loadingSpinner: true
+            },
+            localeSettings: {
+              language: "pt-BR",
+              formatLocale: "pt-BR"
+            }
           },
         });
       });
