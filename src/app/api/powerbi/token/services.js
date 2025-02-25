@@ -1,33 +1,33 @@
-let cached = false;
+// let cached = false;
 
-const cacheUrls = new Map();
+// const cacheUrls = new Map();
 
-export const hasKey = (key) => {
-  return cacheUrls.has(key);
-};
+// export const hasKey = (key) => {
+//   return cacheUrls.has(key);
+// };
 
-export const getCachedPBI = (key) => {
-  return cacheUrls.get(key);
-};
+// export const getCachedPBI = (key) => {
+//   return cacheUrls.get(key);
+// };
 
-export const addPBIToCache = (key, config) => {
-  if (config) cacheUrls.set(key, config);
-  else cacheUrls.delete(key);
-};
+// export const addPBIToCache = (key, config) => {
+//   if (config) cacheUrls.set(key, config);
+//   else cacheUrls.delete(key);
+// };
 
-export const cachePBIData = async () => {
-  cached = true;
-  const pbiInfo = JSON.parse(process.env.NEXT_PUBLIC_POWERBI_REPORTS_ID);
+// export const cachePBIData = async () => {
+//   cached = true;
+//   const pbiInfo = JSON.parse(process.env.NEXT_PUBLIC_POWERBI_REPORTS_ID);
 
-  pbiInfo.forEach(async (report_id) => {
-    const embededConfig = await getPowerBIEmbededConfig(report_id);
-    addPBIToCache(report_id, embededConfig);
-  });
+//   pbiInfo.forEach(async (report_id) => {
+//     const embededConfig = await getPowerBIEmbededConfig(report_id);
+//     addPBIToCache(report_id, embededConfig);
+//   });
 
-  setInterval(() => {
-    cachePBIData();
-  }, 1000 * 60 * 50); // 50 minutos
-};
+//   setInterval(() => {
+//     cachePBIData();
+//   }, 1000 * 60 * 50); // 50 minutos
+// };
 
 export const getPowerBIEmbededConfig = async (report_id) => {
   try {
@@ -73,31 +73,46 @@ function claimEmbededToken(access_token, report_id) {
     accessLevel: "View",
   });
 
-  return fetch(
-    `https://api.powerbi.com/v1.0/myorg/groups/${workspace_id}/reports/${report_id}/GenerateToken`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-        "Content-Type": "application/json",
-      },
-      body: requestBody,
-    }
-  );
+  try {
+    const response = fetch(
+      `https://api.powerbi.com/v1.0/myorg/groups/${workspace_id}/reports/${report_id}/GenerateToken`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: requestBody,
+      }
+    );
+    console.log("~~ Autenticou token")
+    return response;
+  } catch (error) {
+    console.log("~~ Erro ao autenticar token")
+    return null;
+  }
 }
 
 function claimEmbededReports(access_token) {
   const workspace_id = process.env.NEXT_PUBLIC_POWERBI_WORKSPACE_ID || "";
+  
+  try {
+    const response = fetch(
+      `https://api.powerbi.com/v1.0/myorg/groups/${workspace_id}/reports`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
 
-  return fetch(
-    `https://api.powerbi.com/v1.0/myorg/groups/${workspace_id}/reports`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    }
-  );
+    console.log("~~ Autenticou acesso")
+    return response;
+  } catch (error) {
+    console.log("~~ Erro ao autenticar acesso")
+    return null;
+  }
 }
 
 function authenticate() {
@@ -124,4 +139,4 @@ function authenticate() {
   );
 }
 
-if (!cached) cachePBIData();
+// if (!cached) cachePBIData();
