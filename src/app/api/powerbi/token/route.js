@@ -13,12 +13,7 @@ export async function GET(req) {
       const embededConfig = getCachedPBI(report_id);
       const currentDate = new Date();
       const expirationDate = new Date(embededConfig.expiration);
-      const isExpired = currentDate > expirationDate;      
-
-      console.log("====")
-      console.log(embededConfig.token_id)
-      console.log(embededConfig.expiration)
-      console.log("====")
+      const isExpired = currentDate > expirationDate;
 
       if (!isExpired) 
         return NextResponse.json(embededConfig, { status: 200 });

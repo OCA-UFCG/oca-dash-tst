@@ -1,3 +1,5 @@
+let cached = false;
+
 const cacheUrls = new Map();
 
 export const hasKey = (key) => {
@@ -71,7 +73,6 @@ function claimEmbededToken(access_token, report_id) {
         body: requestBody,
       }
     );
-
     return response;
   } catch (error) {
     return null;
@@ -79,7 +80,8 @@ function claimEmbededToken(access_token, report_id) {
 }
 
 function claimEmbededReports(access_token) {
-  const workspace_id = process.env.NEXT_PUBLIC_POWERBI_WORKSPACE_ID || "";  
+  const workspace_id = process.env.NEXT_PUBLIC_POWERBI_WORKSPACE_ID || "";
+  
   try {
     const response = fetch(
       `https://api.powerbi.com/v1.0/myorg/groups/${workspace_id}/reports`,
@@ -120,3 +122,39 @@ function authenticate() {
     }
   );
 }
+
+let cacheInterval = null;
+let isCaching = false;
+
+export const cachePBIData = async () => {
+  if (isCaching) return; // Evita sobreposição
+  isCaching = true;
+  try {
+    cached = true;
+    const pbiInfo = JSON.parse(process.env.NEXT_PUBLIC_POWERBI_REPORTS_ID);
+
+    for (const report_id of pbiInfo) {
+      const embededConfig = await getPowerBIEmbededConfig(report_id);
+      addPBIToCache(report_id, embededConfig);
+    }
+  } catch (error) {
+    console.error("Erro ao atualizar cache:", error);
+  } finally {
+    isCaching = false;
+  }
+};
+
+export const startCaching = () => {
+  if (cacheInterval) {
+    clearInterval(cacheInterval);
+  }
+
+  const runCaching = async () => {
+    await cachePBIData();
+    cacheInterval = setTimeout(runCaching, 1000 * 60 * 50); // 50 minutos
+  };
+
+  runCaching(); // Executa imediatamente
+};
+
+if (!cached) startCaching();
