@@ -44,6 +44,7 @@ export const getPowerBIEmbededConfig = async (report_id) => {
       embed_url: embededURL,
       embed_token: embededToken.token,
       expiration: embededToken.expiration,
+      token_id: embededToken.tokenId
     };
   } catch (error) {
     console.error("Error during authentication:", error.message);
